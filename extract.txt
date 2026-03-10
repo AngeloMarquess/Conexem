@@ -1,0 +1,146 @@
+ 
+Webservice de acesso ao conteúdo do Onipublish 
+Versão: 1.2 
+Data: 04/06/2025  
+
+Lista de disciplinas cadastradas (--- Novidades ---) 
+Dados do endpoint 
+ Url: https://ws.onilearning.com.br/getDisciplinas.php 
+ Método envio: GET 
+ Formato requisição: URL 
+ Formato retorno: JSON 
+ Descrição: Lista as disciplinas disponíveis. 
+ 
+Parâmetros GET 
+Parâmetro Tipo de dados Descrição Obrigatório 
+token Alfanumérico (32) Chave de segurança gerada na 
+interface administrativa da loja 
+SIM 
+instituicao Número inteiro (10) Código da instituição, obtido na 
+interface administrativa da loja 
+SIM 
+disciplina Número inteiro (10) Código da disciplina NÃO 
+unidades booleano 0 – não retorna as unidades (padrão) 
+1 – retorna as unidades 
+NÃO 
+referencias booleano 0 – não retorna as referências (padrão) 
+1 – retorna as referências 
+NÃO 
+ 
+Exemplo de Requisição: 
+https://ws.onilearning.com.br/getDisciplinas.php?instituicao={código 
+fornecido}&token={token fornecido}&disciplina= 
+ 
+Retorno 
+Parâmetro Tipo de dados Descrição 
+id Numérico (10) Código da disciplina 
+nome Alfanumérico (100) Nome da disciplina 
+slug Alfanumérico (100) Nome da disciplina no formato sem acentuação e 
+espaços 
+alteracao Data e hora Última alteração da disciplina 
+status Número inteiro (1) 0 = Inativa 
+1 = Ativa 
+catalogo Varchar(100) Catalogo da Disciplina 
+isbn Varchar(50) ISBN da Disciplina 
+carga_horaria Inteiro (10) Carga horária da disciplina 
+video_introducao Varchar(255) Link do player do vídeo de introdução da disciplina 
+idioma Varchar(5) Idioma da disciplina 
+objetivo Text (65000) Objetivo da Disciplina 
+ementa Text (65000) Ementa da Disciplina 
+unidades Array Lista de unidades da Disciplina 
+unidades.id Inteiro(10) Código da Unidade 
+unidades.nome Varchar(255) Nome da Unidade 
+unidades.numero Inteiro(10) Unidade da Disciplina 
+unidades.autores Array Lista de autores da Unidade 
+unidades.autores.nome Varchar(255) Nome do autor 
+unidades.autores.lattes Varchar(255) Link para o Lattes do autor 
+unidades.competencias Array(Text(65000)) Competências da disciplina 
+unidades.conteudos Array(Text(65000)) Lista de Conteúdo da Unidade 
+referencias Array Lista com as referências da disciplina 
+referencias.descricao Text(255) Descrição da Referência 
+referencias.tipo Text(100) Tipo da Referência 
+Lista de componentes das disciplinas 
+Dados da api  
+ Url: https://ws.onilearning.com.br/getLinksConteudo.php 
+ Método envio: GET 
+ Formato requisição: URL 
+ Formato retorno: JSON 
+ Descrição: Lista os links dos conteúdos das disciplinas 
+ 
+Parâmetros GET 
+Parâmetro Tipo de dados Descrição Obrigatório 
+token Alfanumérico (32) Chave de segurança gerada na 
+interface administrativa da loja 
+SIM 
+instituicao Número inteiro (10) Código da instituição, obtido na 
+interface administrativa da loja 
+SIM 
+disciplina Número inteiro (10) Código da disciplina NÃO 
+unidade Número inteiro (10) Número da unidade na disciplina NÃO 
+ 
+Exemplo de Requisição: 
+https://ws.onilearning.com.br/getLinksConteudo.php?instituicao={código 
+fornecido}&token={token fornecido}&disciplina= 
+ 
+Retorno 
+Parâmetro Tipo de dados Descrição 
+id Numérico (10) Código da disciplina 
+nome Alfanumérico (100) Nome da disciplina 
+alteracao Data e hora Última alteração do conteúdo 
+status Número inteiro (1) 0 = Inativa 
+1 = Ativa 
+unidades array Array com as unidades da disciplina 
+unidades.id Numérico(10) Código da unidade 
+unidades.numero Numérico(10) Número da unidade 
+unidades.componentes Array Array com os componentes da unidade 
+unidades.componentes.id Alfanumérico (10) Código do componente 
+unidades.componentes.link Alfanumérico (255) Link para acesso ou download do componente 
+unidades.componentes.alteracao Data e hora Última alteração do conteúdo 
+unidades.componentes.tipo Alfanumérico (100) Tipo do componente 
+ 
+  
+Lista questionário das disciplinas 
+Dados da api  
+ Url: https://ws.onilearning.com.br/getQuestoes.php 
+ Método envio: GET 
+ Formato requisição: URL 
+ Formato retorno: JSON 
+ Descrição: Lista as questões das disciplinas 
+ 
+Parâmetros GET 
+Parâmetro Tipo de dados Descrição Obrigatório 
+token Alfanumérico (32) Chave de segurança gerada na 
+interface administrativa da loja 
+SIM 
+instituicao Número inteiro (10) Código da instituição, obtido na 
+interface administrativa da loja 
+SIM 
+disciplina Número inteiro (10) Filtro do Código da disciplina NÃO 
+alteracao Data (Ano-Mês-Dia) Filtro de data de alteração NÃO 
+unidade Número inteiro (10) Número da unidade na disciplina NÃO 
+OBS: é recomendável o uso de pelo menos um dos filtros (“disciplina” ou “alteração”) para evitar 
+eventos de timeout. 
+Exemplo de Requisição: 
+https://ws.onilearning.com.br/getQuestoes.php?instituicao={código fornecido}&token={token 
+fornecido}&disciplina=&alteração= 
+ 
+Retorno 
+Parâmetro Tipo de dados Descrição 
+disciplina_id Numérico (10) Código da disciplina 
+disciplina_nome Alfanumérico 
+(100) 
+Nome da disciplina 
+questoes array Array com as questões da unidade 
+questoes.id Numérico(10) Código da questão 
+questoes.unidade Numérico(10) Número da unidade 
+questoes.titulo Texto Longo Enunciado da questão 
+questoes.tipo Alfanumérico (25) Tipo da questão 
+questoes.alteracao Data e Hora Última alteração da questão 
+questoes.alternativas array Array com as alternativas da questão 
+questoes.alternativas.id Numérico(10) Código da alternativa 
+questoes.alternativas.resposta Texto Longo Texto da alternativa 
+questoes.alternativas.feedback_correto Texto Longo Feedback caso a resposta esteja correta 
+questoes.alternativas.feedback_incorreto Texto Longo Feedback caso a resposta esteja incorreta 
+questoes.alternativas.resposta_correta Boleano true: resposta correta 
+false: resposta incorreta 
+ 

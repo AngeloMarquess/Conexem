@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-netflix: #e50914;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+
+  --color-wine-950: #1a0710;
+  --color-wine-900: #2A0B17;
+  --color-wine-800: #3B0E20;
+  --color-plum-600: #8E3E67;
+  --color-terra-500: #B75E4F;
+  --color-amber-400: #D68F4A;
+  --color-card-bg: #120914;
+}
+
+@layer base {
+  body {
+    @apply bg-wine-950 text-slate-200 antialiased font-sans;
+    background-image: radial-gradient(1200px 600px at 100% -10%, rgba(214, 143, 74, .08), transparent 60%),
+      radial-gradient(800px 600px at -10% 10%, rgba(183, 94, 79, .08), transparent 60%);
+  }
+}
