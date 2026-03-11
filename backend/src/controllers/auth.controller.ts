@@ -21,7 +21,13 @@ export const registerHandler = async (request: FastifyRequest, reply: FastifyRep
             id: authData.user.id,
             email: data.email,
             full_name: data.full_name,
-            role: data.role
+            role: data.role,
+            username: data.username || null,
+            whatsapp: data.whatsapp || null,
+            date_of_birth: data.date_of_birth || null,
+            area_atuacao: data.area_atuacao || null,
+            diploma_url: data.diploma_url || null,
+            certificados_urls: data.certificados_urls || null,
         });
 
         if (dbError) {

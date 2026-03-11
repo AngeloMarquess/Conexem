@@ -4,7 +4,7 @@ import { OnipublishService } from './onipublish.service';
 
 const syncSchema = z.object({
     instituicao: z.string().min(1, 'Código da instituição é obrigatório'),
-    token: z.string().length(32, 'Token deve ter 32 caracteres')
+    token: z.string().min(5, 'Token parece inválido (muito curto)')
 });
 
 export class OnipublishController {
@@ -28,7 +28,8 @@ export class OnipublishController {
                 return reply.status(400).send({ success: false, error: 'Validation failed', details: error.errors });
             }
 
-            return reply.status(500).send({ success: false, error: 'Failed to sync with Onipublish' });
+            const message = error instanceof Error ? error.message : 'Failed to sync with Onipublish';
+            return reply.status(500).send({ success: false, error: message });
         }
     }
 }

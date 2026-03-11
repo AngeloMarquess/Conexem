@@ -64,78 +64,84 @@ export function TeacherRegister() {
         setErrMsg('');
 
         try {
-            // 1. Create Auth User Native Flow
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-                email: formData.email,
-                password: formData.senha,
-                options: {
-                    data: {
-                        full_name: `${formData.nome} ${formData.sobrenome}`,
-                        role: 'teacher'
-                    }
-                }
+            // 1. Create user via backend API (uses service_role key, bypasses RLS)
+            const response = await fetch('http://localhost:3000/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.senha,
+                    full_name: `${formData.nome} ${formData.sobrenome}`,
+                    role: 'teacher',
+                    username: formData.usuario,
+                    whatsapp: formData.whatsapp,
+                    date_of_birth: formData.dataNascimento,
+                    area_atuacao: formData.areaAtuacao,
+                }),
             });
 
-            if (authError) throw authError;
-            if (!authData.user) throw new Error('Usuário não criado.');
+            const result = await response.json();
 
-            const userId = authData.user.id;
-            let avatarUrl = null;
-            let diplomaUrl = null;
-            const certsUrls: string[] = [];
+            if (!response.ok) {
+                throw new Error(result.error || result.details || 'Erro ao cadastrar professor.');
+            }
 
-            // 2. Upload Avatar
-            if (photoFile) {
+            const userId = result.user?.id;
+
+            // 2. Upload Avatar (best-effort)
+            if (photoFile && userId) {
                 const fileExt = photoFile.name.split('.').pop();
                 const filePath = `${userId}/avatar.${fileExt}`;
                 const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, photoFile);
                 if (!uploadError) {
                     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-                    avatarUrl = data.publicUrl;
+                    // best-effort update
+                    await fetch(`http://localhost:3000/auth/update-profile`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId, avatar_url: data.publicUrl }),
+                    }).catch(() => {});
                 }
             }
 
-            // 3. Upload Diploma
-            if (diplomaFile) {
+            // 3. Upload Diploma (best-effort)
+            if (diplomaFile && userId) {
                 const fileExt = diplomaFile.name.split('.').pop();
                 const filePath = `${userId}/diploma.${fileExt}`;
                 const { error: dError } = await supabase.storage.from('documents').upload(filePath, diplomaFile);
                 if (!dError) {
                     const { data } = supabase.storage.from('documents').getPublicUrl(filePath);
-                    diplomaUrl = data.publicUrl;
+                    await fetch(`http://localhost:3000/auth/update-profile`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId, diploma_url: data.publicUrl }),
+                    }).catch(() => {});
                 }
             }
 
-            // 4. Upload Certificados
-            for (let i = 0; i < certificadosFiles.length; i++) {
-                const file = certificadosFiles[i];
-                const fileExt = file.name.split('.').pop();
-                const filePath = `${userId}/certificado_${i}.${fileExt}`;
-                const { error: cError } = await supabase.storage.from('documents').upload(filePath, file);
-                if (!cError) {
-                    const { data } = supabase.storage.from('documents').getPublicUrl(filePath);
-                    certsUrls.push(data.publicUrl);
+            // 4. Upload Certificados (best-effort)
+            if (certificadosFiles.length > 0 && userId) {
+                const certsUrls: string[] = [];
+                for (let i = 0; i < certificadosFiles.length; i++) {
+                    const file = certificadosFiles[i];
+                    const fileExt = file.name.split('.').pop();
+                    const filePath = `${userId}/certificado_${i}.${fileExt}`;
+                    const { error: cError } = await supabase.storage.from('documents').upload(filePath, file);
+                    if (!cError) {
+                        const { data } = supabase.storage.from('documents').getPublicUrl(filePath);
+                        certsUrls.push(data.publicUrl);
+                    }
+                }
+                if (certsUrls.length > 0) {
+                    await fetch(`http://localhost:3000/auth/update-profile`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId, certificados_urls: certsUrls }),
+                    }).catch(() => {});
                 }
             }
-
-            // 5. Update Profile
-            const { error: profileError } = await supabase
-                .from('users')
-                .update({
-                    username: formData.usuario,
-                    whatsapp: formData.whatsapp,
-                    date_of_birth: formData.dataNascimento,
-                    avatar_url: avatarUrl,
-                    area_atuacao: formData.areaAtuacao,
-                    diploma_url: diplomaUrl,
-                    certificados_urls: certsUrls
-                })
-                .eq('id', userId);
-
-            if (profileError) throw profileError;
 
             setStatus('success');
-            // reset form here if needed for consecutive creations
 
         } catch (error: any) {
             console.error('Error saving teacher:', error);

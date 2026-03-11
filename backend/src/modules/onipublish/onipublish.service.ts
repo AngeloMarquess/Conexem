@@ -37,18 +37,48 @@ export class OnipublishService {
                 unidades: '1', // Requesting direct unities mapping
             });
 
-            const response = await fetch(`${BASE_URL}?${queryParams}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+            console.log(`[Onipublish] Inciando Fetch para ${instituicao}...`);
+            const response = await fetch(`${BASE_URL}?${queryParams}`, {
+                signal: controller.signal
+            }).finally(() => {
+                clearTimeout(timeoutId);
+            });
+
+            console.log(`[Onipublish] Status do Fetch: ${response.status} ${response.statusText}`);
 
             if (!response.ok) {
+                const responseText = await response.text();
+                console.error(`[Onipublish] Resposta bruta do erro: ${responseText}`);
                 throw new Error(`Onipublish API Error: ${response.status}`);
             }
 
             // Expected return is an array directly evaluating the spec
-            const dados: OnipublishDisciplina[] = await response.json();
+            const textData = await response.text();
+            // Try parsing to JSON manually to avoid silent crashes on invalid JSON from PHP
+            let parsed: any;
+            try {
+                parsed = JSON.parse(textData);
+                console.log(`[Onipublish] JSON parsed OK.`);
+            } catch (e: any) {
+                console.error(`[Onipublish] JSON Parse Error. Texto cru recebido:`, textData.substring(0, 200) + '...');
+                throw new Error(`Falha no parser JSON da Onipublish: ${e.message}`);
+            }
 
-            if (!Array.isArray(dados)) {
+            // The Onipublish API returns { status: 502, mensagem: "..." } on auth errors
+            // even with HTTP 200 — check for this before treating as array
+            if (!Array.isArray(parsed)) {
+                if (parsed && parsed.mensagem) {
+                    console.error(`[Onipublish] Erro da API: ${parsed.mensagem}`);
+                    throw new Error(parsed.mensagem);
+                }
                 throw new Error('Formato da API do Onipublish inválido (esperado Array de disciplinas).');
             }
+
+            const dados: OnipublishDisciplina[] = parsed;
+            console.log(`[Onipublish] Parsed JSON array com ${dados.length} itens validos.`);
 
             // Extract and clean valid courses 
             const coursesToInsert = dados

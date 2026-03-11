@@ -21,3 +21,13 @@
       radial-gradient(800px 600px at -10% 10%, rgba(183, 94, 79, .08), transparent 60%);
   }
 }
+
+@keyframes progress {
+  0% {
+    width: 0%;
+  }
+
+  100% {
+    width: 100%;
+  }
+}

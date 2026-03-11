@@ -48,26 +48,31 @@ export function StudentRegister() {
         }
 
         try {
-            // 1. Create Auth User
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-                email: formData.email,
-                password: formData.senha,
-                options: {
-                    data: {
-                        full_name: `${formData.nome} ${formData.sobrenome}`,
-                        role: 'student'
-                    }
-                }
+            // 1. Create user via backend API (uses service_role key, bypasses RLS)
+            const response = await fetch('http://localhost:3000/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.senha,
+                    full_name: `${formData.nome} ${formData.sobrenome}`,
+                    role: 'student',
+                    username: formData.usuario,
+                    whatsapp: formData.whatsapp,
+                    date_of_birth: formData.dataNascimento,
+                }),
             });
 
-            if (authError) throw authError;
-            if (!authData.user) throw new Error('Usuário não criado.');
+            const result = await response.json();
 
-            const userId = authData.user.id;
-            let avatarUrl = null;
+            if (!response.ok) {
+                throw new Error(result.error || result.details || 'Erro ao cadastrar usuário.');
+            }
+
+            const userId = result.user?.id;
 
             // 2. Upload Avatar if exists
-            if (photoFile) {
+            if (photoFile && userId) {
                 const fileExt = photoFile.name.split('.').pop();
                 const filePath = `${userId}/avatar.${fileExt}`;
 
@@ -75,30 +80,21 @@ export function StudentRegister() {
                     .from('avatars')
                     .upload(filePath, photoFile);
 
-                if (uploadError) throw uploadError;
+                if (!uploadError) {
+                    const { data: publicUrlData } = supabase.storage
+                        .from('avatars')
+                        .getPublicUrl(filePath);
 
-                const { data: publicUrlData } = supabase.storage
-                    .from('avatars')
-                    .getPublicUrl(filePath);
-
-                avatarUrl = publicUrlData.publicUrl;
+                    // Best-effort avatar URL update
+                    await fetch(`http://localhost:3000/users/${userId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ avatar_url: publicUrlData.publicUrl }),
+                    }).catch(() => { /* avatar update is best-effort */ });
+                }
             }
 
-            // 3. Update Public Profile created by trigger
-            const { error: profileError } = await supabase
-                .from('users')
-                .update({
-                    username: formData.usuario,
-                    whatsapp: formData.whatsapp,
-                    date_of_birth: formData.dataNascimento,
-                    avatar_url: avatarUrl
-                })
-                .eq('id', userId);
-
-            if (profileError) throw profileError;
-
             setStatus('success');
-            // reset form here if needed
 
         } catch (error: any) {
             console.error('Error saving student:', error);

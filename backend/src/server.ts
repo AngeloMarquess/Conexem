@@ -5,12 +5,13 @@ import cors from '@fastify/cors';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import contentRoutes from './routes/content.routes';
-import gamificationRoutes from './routes/gamification.routes';
-import storiesRoutes from './routes/stories.routes';
 import analyticsRoutes from './routes/analytics.routes';
 
 import { onipublishRoutes } from './modules/onipublish/onipublish.routes';
 import { courseRoutes } from './modules/courses/course.routes';
+import { telemetryRoutes } from './modules/telemetry/telemetry.routes';
+import { gamificationRoutes } from './modules/gamification/gamification.routes';
+import { storiesRoutes } from './modules/stories/stories.routes';
 
 const server = Fastify({
     logger: true
@@ -23,6 +24,8 @@ server.register(cors, {
 // Admin Integration & Course Modules
 server.register(onipublishRoutes, { prefix: '/api/onipublish' });
 server.register(courseRoutes, { prefix: '/api/courses' });
+server.register(telemetryRoutes, { prefix: '/api/telemetry' });
+server.register(gamificationRoutes, { prefix: '/api/gamification' });
 
 // Register Original Domain Routes (Mocked currently based on root plan)
 server.register(authRoutes, { prefix: '/auth' });

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import { CloudRain, CheckCircle, Loader2, AlertTriangle, KeySquare, Building } from 'lucide-react';
 
 export function OnipublishIntegration() {
@@ -9,6 +10,7 @@ export function OnipublishIntegration() {
 
     const [isSyncing, setIsSyncing] = useState(false);
     const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [errorMessage, setErrorMessage] = useState('');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -18,14 +20,33 @@ export function OnipublishIntegration() {
         e.preventDefault();
         setIsSyncing(true);
         setSyncStatus('idle');
+        setErrorMessage('');
 
         try {
-            // Simulate API call to our Fastify backend
-            // await axios.post('/api/onipublish/sync', formData);
-            await new Promise(resolve => setTimeout(resolve, 3000)); // Fake 3 second delay
-            setSyncStatus('success');
-        } catch (error) {
+            const response = await axios.post('http://localhost:3000/api/onipublish/sync', formData);
+            if (response.data.success) {
+                setSyncStatus('success');
+            } else {
+                setSyncStatus('error');
+                setErrorMessage(response.data.error || 'Erro desconhecido');
+            }
+        } catch (error: any) {
+            console.error("AXIOS ERROR", error);
             setSyncStatus('error');
+            try {
+                let detail = error.message;
+                if (error.response?.data) {
+                    const data = error.response.data;
+                    if (data.details && Array.isArray(data.details)) {
+                        detail = data.details.map((d: any) => d.message).join(', ');
+                    } else if (data.error) {
+                        detail = data.error;
+                    }
+                }
+                setErrorMessage(detail);
+            } catch (innerError: any) {
+                setErrorMessage("Erro crítico ao formatar resposta: " + innerError.message);
+            }
         } finally {
             setIsSyncing(false);
         }
@@ -80,8 +101,14 @@ export function OnipublishIntegration() {
                                 </div>
                             )}
                             {syncStatus === 'error' && (
-                                <div className="flex items-center gap-2 text-rose-500 font-medium">
-                                    <AlertTriangle className="w-5 h-5" /> Erro ao tentar sincronizar. Verifique as credenciais.
+                                <div className="flex flex-col text-rose-500 font-medium">
+                                    <div className="flex items-center gap-2">
+                                        <AlertTriangle className="w-5 h-5" />
+                                        <span>Erro ao tentar sincronizar.</span>
+                                    </div>
+                                    {errorMessage && (
+                                        <span className="text-sm mt-1 ml-7 text-rose-400">{errorMessage}</span>
+                                    )}
                                 </div>
                             )}
                         </div>

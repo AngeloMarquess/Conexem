@@ -1,8 +1,29 @@
 import { useState } from 'react';
 import { Play, Pause, Volume2, Maximize, Settings2, SkipBack, SkipForward, PlayCircle } from 'lucide-react';
+import axios from 'axios';
+import { useAuthStore } from '../../store/auth';
 
 export function VideoPlayer() {
     const [isPlaying, setIsPlaying] = useState(false);
+    const session = useAuthStore(s => s.session);
+
+    const togglePlay = async () => {
+        const nextState = !isPlaying;
+        setIsPlaying(nextState);
+
+        // Simulated trigger - Only log 'lesson_start' if it just started playing
+        if (nextState && session?.user) {
+            try {
+                await axios.post('http://localhost:3000/api/telemetry/log', {
+                    userId: session.user.id,
+                    actionType: 'lesson_start'
+                    // lessonId would dynamically come via props based on the mapped array logic, currently generic for UI sample hooks
+                });
+            } catch (err) {
+                console.error("Failed to map interaction trace telemetry", err);
+            }
+        }
+    };
 
     return (
         <div className="w-full relative bg-black aspect-video rounded-xl overflow-hidden group shadow-2xl ring-1 ring-white/10">
@@ -29,7 +50,7 @@ export function VideoPlayer() {
 
                 <div className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => setIsPlaying(!isPlaying)} className="text-white hover:text-amber-400 transition-colors">
+                        <button onClick={togglePlay} className="text-white hover:text-amber-400 transition-colors">
                             {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
                         </button>
                         <button className="text-white hover:text-amber-400 transition-colors">

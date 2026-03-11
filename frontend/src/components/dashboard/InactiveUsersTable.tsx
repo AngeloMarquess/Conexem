@@ -1,13 +1,16 @@
 import { MessageCircle } from 'lucide-react';
 import { Button } from '../ui/core';
 
-const users = [
-    { id: 1, name: 'Maria Souza', lastActive: '8 dias atrás', module: 'Modulo 2', risk: 'Alto' },
-    { id: 2, name: 'Pedro Alves', lastActive: '14 dias atrás', module: 'Modulo 1', risk: 'Crítico' },
-    { id: 3, name: 'Carlos Santos', lastActive: '20 dias atrás', module: 'Introdução', risk: 'Crítico' },
-];
+export function InactiveUsersTable({ users = [] }: { users: any[] }) {
+    // Map backend telemetry payload onto expected mock-style local formatting
+    const mappedUsers = users.map((u, idx) => ({
+        id: u.id || idx,
+        name: u.full_name,
+        lastActive: `${u.daysInactive} dias atrás`,
+        module: 'Módulo Pendente', // Could be fetched from a deeper JOIN on progress table
+        risk: u.riskLevel === 'High' ? 'Crítico' : 'Alto'
+    }));
 
-export function InactiveUsersTable() {
     return (
         <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl overflow-hidden mt-8">
             <h3 className="text-white font-semibold mb-6">Alunos inativos ({'>'} 7 dias)</h3>
@@ -23,7 +26,7 @@ export function InactiveUsersTable() {
                         </tr>
                     </thead>
                     <tbody className="text-zinc-200">
-                        {users.map(u => (
+                        {mappedUsers.map(u => (
                             <tr key={u.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/20 transition-colors">
                                 <td className="py-4 font-medium">{u.name}</td>
                                 <td className="py-4">{u.lastActive}</td>

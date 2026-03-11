@@ -1,10 +1,15 @@
 import { Users, Activity, AlertTriangle } from 'lucide-react';
 
-export function KpiCards() {
+export function KpiCards({ data }: { data: any }) {
+    const totalAlunos = data?.totalAnalysed || 0;
+    const criticos = data?.highRiskCount || 0;
+    // Calculate hypothetical engagement: percentage of users not at "High" risk
+    const engajamento = totalAlunos > 0 ? Math.round(((totalAlunos - criticos) / totalAlunos) * 100) : 0;
+
     const kpis = [
-        { title: 'Total de Alunos', value: '1,245', icon: Users, color: 'text-blue-500' },
-        { title: 'Taxa de Engajamento', value: '88%', icon: Activity, color: 'text-green-500' },
-        { title: 'Alunos em Risco Crítico', value: '34', icon: AlertTriangle, color: 'text-brand-netflix' },
+        { title: 'Total de Alunos', value: totalAlunos.toString(), icon: Users, color: 'text-blue-500' },
+        { title: 'Taxa de Engajamento', value: `${engajamento}%`, icon: Activity, color: 'text-green-500' },
+        { title: 'Alunos em Risco Crítico', value: criticos.toString(), icon: AlertTriangle, color: 'text-brand-netflix' },
     ];
 
     return (
